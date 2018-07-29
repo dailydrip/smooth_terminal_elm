@@ -56,7 +56,7 @@ avatar : Post -> Html msg
 avatar post =
     div
         [ class "avatar" ]
-        [ img [ src post.author.avatarUrl ] []
+        [ img [ src post.author.avatarUrl, class "user-avatar -borderless" ] []
         ]
 
 
