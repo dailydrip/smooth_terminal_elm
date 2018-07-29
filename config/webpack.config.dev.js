@@ -63,7 +63,7 @@ module.exports = {
 
   resolve: {
     modules: ['node_modules'],
-    extensions: ['.js', '.elm']
+    extensions: ['.js', '.elm', '.css']
   },
 
   module: {
@@ -153,7 +153,7 @@ module.exports = {
           {
             loader: require.resolve('css-loader'),
             options: {
-              importLoaders: 1
+              import: false
             }
           },
           {
