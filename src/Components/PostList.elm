@@ -31,10 +31,19 @@ viewPost post =
 
 itemMetadata : Post -> Html msg
 itemMetadata post =
+    let
+        username =
+            case post.author.username of
+                Nothing ->
+                    text "Anonymous User"
+
+                Just username ->
+                    a [ class "username", href "#" ] [ text ("@" ++ username) ]
+    in
     div
         [ class "item-metadata" ]
         [ avatar post
-        , a [ class "username", href "#" ] [ text ("@" ++ post.author.username) ]
+        , username
         , timeAbbr post.insertedAt
         ]
 
