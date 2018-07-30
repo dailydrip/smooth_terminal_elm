@@ -11,6 +11,7 @@ import Graphqelm.Http
 import Graphqelm.Operation exposing (RootMutation, RootQuery)
 import Graphqelm.SelectionSet exposing (SelectionSet, hardcoded, with)
 import Html exposing (Html, div, h1, img, text)
+import Json.Decode as Decode exposing (Value)
 import RemoteData exposing (RemoteData(..))
 import SmoothTerminal.Mutation as Mutation
 import SmoothTerminal.Object
@@ -24,21 +25,11 @@ import Types.GetStoryResponse exposing (GetStoryResponse)
 import Types.Msg exposing (Msg(..))
 import Types.Post exposing (Post)
 import Types.PostForm exposing (PostForm)
-import Types.RemoteThread exposing (RemoteThread)
+import Types.RemoteStory exposing (RemoteStory)
 import Types.Story exposing (Story)
 import Types.Thread exposing (Thread)
 import Types.User exposing (User)
 import Views.Thread
-
-
-storyUid : String
-storyUid =
-    "hcq"
-
-
-storyId : Int
-storyId =
-    60
 
 
 graphqlEndpoint : String
@@ -51,8 +42,8 @@ graphqlEndpoint =
 ---- MODEL ----
 
 
-query : SelectionSet GetStoryResponse RootQuery
-query =
+query : String -> SelectionSet GetStoryResponse RootQuery
+query storyUid =
     Query.selection GetStoryResponse
         |> with (Query.story { uid = storyUid } story)
 
@@ -62,6 +53,7 @@ story =
     Story.selection Story
         |> with Story.id
         |> with (Story.commentsThread commentsThread)
+        |> with Story.uid
 
 
 commentsThread : SelectionSet Thread SmoothTerminal.Object.FirestormThread
@@ -97,8 +89,9 @@ user =
 
 
 type alias Model =
-    { thread : RemoteThread
+    { story : RemoteStory
     , form : Form () PostForm
+    , storyUid : Maybe String
     }
 
 
@@ -108,13 +101,31 @@ validation =
         (field "body" string)
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( { thread = RemoteData.Loading
-      , form = Form.initial [] validation
-      }
-    , getStory
-    )
+init : Value -> ( Model, Cmd Msg )
+init flags =
+    case decodeUidFromJson flags of
+        Just uid ->
+            ( { story = RemoteData.Loading
+              , form = Form.initial [] validation
+              , storyUid = Just uid
+              }
+            , getStory (Just uid)
+            )
+
+        Nothing ->
+            ( { story = RemoteData.Loading
+              , form = Form.initial [] validation
+              , storyUid = Nothing
+              }
+            , Cmd.none
+            )
+
+
+decodeUidFromJson : Value -> Maybe String
+decodeUidFromJson json =
+    json
+        |> Decode.decodeValue Decode.string
+        |> Result.toMaybe
 
 
 
@@ -124,14 +135,24 @@ init =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        GotResponse thread ->
-            ( { model | thread = thread }, Cmd.none )
+        GotResponse story ->
+            ( { model | story = story }, Cmd.none )
 
         AddComment ->
             ( model, addComment model )
 
         AddedComment ->
-            ( { model | form = Form.update validation (Form.Reset [ ( "body", Form.Field.string "" ) ]) model.form }, getStory )
+            ( { model
+                | form =
+                    Form.update validation
+                        (Form.Reset
+                            [ ( "body", Form.Field.string "" )
+                            ]
+                        )
+                        model.form
+              }
+            , getStory model.storyUid
+            )
 
         FormMsg formMsg ->
             let
@@ -151,8 +172,8 @@ update msg model =
 
 
 view : Model -> Html Msg
-view { thread, form } =
-    case thread of
+view { story, form } =
+    case story of
         NotAsked ->
             text "Initializing..."
 
@@ -180,9 +201,9 @@ view { thread, form } =
 ---- PROGRAM ----
 
 
-main : Program Never Model Msg
+main : Program Value Model Msg
 main =
-    Html.program
+    Html.programWithFlags
         { view = view
         , init = init
         , update = update
@@ -190,32 +211,48 @@ main =
         }
 
 
-getStory : Cmd Msg
-getStory =
-    query
-        |> Graphqelm.Http.queryRequest graphqlEndpoint
-        |> withAuthorization
-        |> Graphqelm.Http.send (RemoteData.fromResult >> GotResponse)
+getStory : Maybe String -> Cmd Msg
+getStory maybeStoryUid =
+    case maybeStoryUid of
+        Nothing ->
+            Cmd.none
+
+        Just storyUid ->
+            storyUid
+                |> query
+                |> Graphqelm.Http.queryRequest graphqlEndpoint
+                |> withAuthorization
+                |> Graphqelm.Http.send (RemoteData.fromResult >> GotResponse)
 
 
-addCommentMutation : String -> SelectionSet GetStoryResponse RootMutation
-addCommentMutation body =
+addCommentMutation : Int -> String -> SelectionSet GetStoryResponse RootMutation
+addCommentMutation storyId body =
     Mutation.selection GetStoryResponse
         |> with
             (Mutation.addComment { body = body, storyId = toString storyId } story)
 
 
 addComment : Model -> Cmd Msg
-addComment { form } =
+addComment { story, form } =
     case Form.getOutput form of
         Nothing ->
             Cmd.none
 
         Just commentForm ->
-            addCommentMutation commentForm.body
-                |> Graphqelm.Http.mutationRequest graphqlEndpoint
-                |> withAuthorization
-                |> Graphqelm.Http.send (RemoteData.fromResult >> always AddedComment)
+            case story of
+                Success response ->
+                    case response.story of
+                        Nothing ->
+                            Cmd.none
+
+                        Just story ->
+                            addCommentMutation story.id commentForm.body
+                                |> Graphqelm.Http.mutationRequest graphqlEndpoint
+                                |> withAuthorization
+                                |> Graphqelm.Http.send (RemoteData.fromResult >> always AddedComment)
+
+                _ ->
+                    Cmd.none
 
 
 withAuthorization =
