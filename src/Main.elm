@@ -12,6 +12,7 @@ import Graphqelm.Operation exposing (RootMutation, RootQuery)
 import Graphqelm.SelectionSet exposing (SelectionSet, hardcoded, with)
 import Html exposing (Html, div, h1, img, text)
 import Json.Decode as Decode exposing (Value)
+import Json.Decode.Pipeline exposing (decode, required)
 import RemoteData exposing (RemoteData(..))
 import SmoothTerminal.Mutation as Mutation
 import SmoothTerminal.Object
@@ -22,6 +23,7 @@ import SmoothTerminal.Object.Story as Story
 import SmoothTerminal.Query as Query
 import SmoothTerminal.Scalar
 import Types.GetStoryResponse exposing (GetStoryResponse)
+import Types.GraphqlData exposing (GraphqlData)
 import Types.Msg exposing (Msg(..))
 import Types.Post exposing (Post)
 import Types.PostForm exposing (PostForm)
@@ -88,10 +90,17 @@ user =
         |> hardcoded "https://secure.gravatar.com/avatar/6bed913a657e07e88a2f6a30de677efa?d=https%3A%2F%2Fapi.adorable.io%2Favatars%2F256%2Fveetase%40adorable.png&s=256"
 
 
+type alias Flags =
+    { storyUid : String
+    , token : String
+    }
+
+
 type alias Model =
     { story : RemoteStory
     , form : Form () PostForm
-    , storyUid : Maybe String
+    , flags : Maybe Flags
+    , error : Maybe String
     }
 
 
@@ -102,30 +111,51 @@ validation =
 
 
 init : Value -> ( Model, Cmd Msg )
-init flags =
-    case decodeUidFromJson flags of
-        Just uid ->
-            ( { story = RemoteData.Loading
-              , form = Form.initial [] validation
-              , storyUid = Just uid
-              }
-            , getStory (Just uid)
-            )
+init flagsValue =
+    let
+        flags =
+            decodeFlags flagsValue
 
-        Nothing ->
-            ( { story = RemoteData.Loading
-              , form = Form.initial [] validation
-              , storyUid = Nothing
-              }
-            , Cmd.none
-            )
+        newModel =
+            { story = RemoteData.Loading
+            , form = Form.initial [] validation
+            , flags = flags
+            , error = Nothing
+            }
+
+        newCmd =
+            case flags of
+                Nothing ->
+                    Cmd.none
+
+                Just { storyUid, token } ->
+                    getStory storyUid token
+    in
+    ( newModel, newCmd )
 
 
-decodeUidFromJson : Value -> Maybe String
-decodeUidFromJson json =
+decodeFlags : Value -> Maybe Flags
+decodeFlags json =
     json
-        |> Decode.decodeValue Decode.string
+        |> Decode.decodeValue flagsDecoder
         |> Result.toMaybe
+
+
+flagsDecoder : Decode.Decoder Flags
+flagsDecoder =
+    decode Flags
+        |> required "storyUid" Decode.string
+        |> required "token" Decode.string
+
+
+getStoryFromModel : Model -> Cmd Msg
+getStoryFromModel model =
+    case model.flags of
+        Nothing ->
+            Cmd.none
+
+        Just flags ->
+            getStory flags.storyUid flags.token
 
 
 
@@ -141,7 +171,7 @@ update msg model =
         AddComment ->
             ( model, addComment model )
 
-        AddedComment ->
+        AddedComment maybeString ->
             ( { model
                 | form =
                     Form.update validation
@@ -151,7 +181,7 @@ update msg model =
                         )
                         model.form
               }
-            , getStory model.storyUid
+            , getStoryFromModel model
             )
 
         FormMsg formMsg ->
@@ -172,7 +202,7 @@ update msg model =
 
 
 view : Model -> Html Msg
-view { story, form } =
+view { story, form, error } =
     case story of
         NotAsked ->
             text "Initializing..."
@@ -188,7 +218,7 @@ view { story, form } =
                 Just story ->
                     case story.commentsThread of
                         Just thread ->
-                            Views.Thread.view form thread
+                            Views.Thread.view form error thread
 
                         Nothing ->
                             text "no comments thread"
@@ -211,18 +241,13 @@ main =
         }
 
 
-getStory : Maybe String -> Cmd Msg
-getStory maybeStoryUid =
-    case maybeStoryUid of
-        Nothing ->
-            Cmd.none
-
-        Just storyUid ->
-            storyUid
-                |> query
-                |> Graphqelm.Http.queryRequest graphqlEndpoint
-                |> withAuthorization
-                |> Graphqelm.Http.send (RemoteData.fromResult >> GotResponse)
+getStory : String -> String -> Cmd Msg
+getStory storyUid token =
+    storyUid
+        |> query
+        |> Graphqelm.Http.queryRequest graphqlEndpoint
+        |> withAuthorization token
+        |> Graphqelm.Http.send (RemoteData.fromResult >> GotResponse)
 
 
 addCommentMutation : Int -> String -> SelectionSet GetStoryResponse RootMutation
@@ -233,31 +258,41 @@ addCommentMutation storyId body =
 
 
 addComment : Model -> Cmd Msg
-addComment { story, form } =
-    case Form.getOutput form of
+addComment { story, form, flags } =
+    case flags of
         Nothing ->
             Cmd.none
 
-        Just commentForm ->
-            case story of
-                Success response ->
-                    case response.story of
-                        Nothing ->
-                            Cmd.none
-
-                        Just story ->
-                            addCommentMutation story.id commentForm.body
-                                |> Graphqelm.Http.mutationRequest graphqlEndpoint
-                                |> withAuthorization
-                                |> Graphqelm.Http.send (RemoteData.fromResult >> always AddedComment)
-
-                _ ->
+        Just flags ->
+            case Form.getOutput form of
+                Nothing ->
                     Cmd.none
 
+                Just commentForm ->
+                    case story of
+                        Success response ->
+                            case response.story of
+                                Nothing ->
+                                    Cmd.none
 
-withAuthorization =
-    let
-        token =
-            "SFMyNTY.eyJkYXRhIjp7ImlkIjoxfSwiZXhwIjoxNTMyOTM2NjAyfQ.YjhCkpKzF2yKOL3yJzw2C-GLuiUjgJXkEUJrhi7rlII"
-    in
+                                Just story ->
+                                    addCommentMutation story.id commentForm.body
+                                        |> Graphqelm.Http.mutationRequest graphqlEndpoint
+                                        |> withAuthorization flags.token
+                                        |> Graphqelm.Http.send
+                                            (RemoteData.fromResult
+                                                >> mapRemoteDataToMaybeString
+                                                >> AddedComment
+                                            )
+
+                        _ ->
+                            Cmd.none
+
+
+mapRemoteDataToMaybeString : GraphqlData a -> Maybe String
+mapRemoteDataToMaybeString _ =
+    Nothing
+
+
+withAuthorization token =
     Graphqelm.Http.withHeader "authorization" <| "Bearer " ++ token

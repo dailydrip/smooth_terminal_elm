@@ -7,5 +7,5 @@ import Types.RemoteStory exposing (RemoteStory)
 type Msg
     = GotResponse RemoteStory
     | AddComment
-    | AddedComment
+    | AddedComment (Maybe String)
     | FormMsg Form.Msg

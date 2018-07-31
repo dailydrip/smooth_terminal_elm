@@ -11,12 +11,23 @@ import Types.PostForm exposing (PostForm)
 import Types.Thread exposing (Thread)
 
 
-view : Form () PostForm -> Thread -> Html Msg
-view form thread =
+view : Form () PostForm -> Maybe String -> Thread -> Html Msg
+view form error thread =
     div [ class "thread-view" ]
-        [ posts thread
+        [ errorView error
+        , posts thread
         , commentForm form
         ]
+
+
+errorView : Maybe String -> Html msg
+errorView maybeError =
+    case maybeError of
+        Just error ->
+            div [ class "notification-box -error" ] [ text error ]
+
+        Nothing ->
+            text ""
 
 
 commentForm : Form () PostForm -> Html Msg

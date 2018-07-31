@@ -1,9 +1,8 @@
 module Types.RemoteStory exposing (RemoteStory)
 
-import Graphqelm.Http
-import RemoteData exposing (RemoteData)
 import Types.GetStoryResponse exposing (GetStoryResponse)
+import Types.GraphqlData exposing (GraphqlData)
 
 
 type alias RemoteStory =
-    RemoteData (Graphqelm.Http.Error GetStoryResponse) GetStoryResponse
+    GraphqlData GetStoryResponse

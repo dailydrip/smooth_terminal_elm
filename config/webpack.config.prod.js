@@ -1,22 +1,22 @@
-'use strict';
+"use strict";
 
-const autoprefixer = require('autoprefixer');
-const SWPrecacheWebpackPlugin = require('sw-precache-webpack-plugin');
-const DefinePlugin = require('webpack/lib/DefinePlugin');
-const UglifyJsPlugin = require('webpack/lib/optimize/UglifyJsPlugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const AssetsPlugin = require('assets-webpack-plugin');
-const InterpolateHtmlPlugin = require('react-dev-utils/InterpolateHtmlPlugin');
-const getClientEnvironment = require('./env');
-const paths = require('../config/paths');
+const autoprefixer = require("autoprefixer");
+const SWPrecacheWebpackPlugin = require("sw-precache-webpack-plugin");
+const DefinePlugin = require("webpack/lib/DefinePlugin");
+const UglifyJsPlugin = require("webpack/lib/optimize/UglifyJsPlugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const AssetsPlugin = require("assets-webpack-plugin");
+const InterpolateHtmlPlugin = require("react-dev-utils/InterpolateHtmlPlugin");
+const getClientEnvironment = require("./env");
+const paths = require("../config/paths");
 
 // Webpack uses `publicPath` to determine where the app is being served from.
 // It requires a trailing slash, or the file assets will get an incorrect path.
 const publicPath = paths.servedPath;
 // Some apps do not use client-side routing with pushState.
 // For these, "homepage" can be set to "." to enable relative asset paths.
-const shouldUseRelativeAssetPaths = publicPath === './';
+const shouldUseRelativeAssetPaths = publicPath === "./";
 // `publicUrl` is just like `publicPath`, but we will provide it to our app
 // as %PUBLIC_URL% in `index.html` and `process.env.PUBLIC_URL` in JavaScript.
 // Omit trailing slash as %PUBLIC_URL%/xyz looks better than %PUBLIC_URL%xyz.
@@ -26,7 +26,7 @@ const publicUrl = publicPath.slice(0, -1);
 const env = getClientEnvironment(publicUrl);
 
 // Note: defined here because it will be used more than once.
-const cssFilename = 'static/css/[name].[contenthash:8].css';
+const cssFilename = "static/css/[name].[contenthash:8].css";
 
 // ExtractTextPlugin expects the build output to be flat.
 // (See https://github.com/webpack-contrib/extract-text-webpack-plugin/issues/27)
@@ -34,32 +34,32 @@ const cssFilename = 'static/css/[name].[contenthash:8].css';
 // To have this structure working with relative paths, we have to use custom options.
 const extractTextPluginOptions = shouldUseRelativeAssetPaths
   ? // Making sure that the publicPath goes back to to build folder.
-    { publicPath: Array(cssFilename.split('/').length).join('../') }
+    { publicPath: Array(cssFilename.split("/").length).join("../") }
   : {};
 
 // Enable users to turn on dead code elimination.
 const deadCodeElimination =
-  process.env.DEAD_CODE_ELIMINATION === 'true'
+  process.env.DEAD_CODE_ELIMINATION === "true"
     ? {
         dead_code: true,
         pure_funcs: [
-          '_elm_lang$core$Native_Utils.update',
-          'A2',
-          'A3',
-          'A4',
-          'A5',
-          'A6',
-          'A7',
-          'A8',
-          'A9',
-          'F2',
-          'F3',
-          'F4',
-          'F5',
-          'F6',
-          'F7',
-          'F8',
-          'F9'
+          "_elm_lang$core$Native_Utils.update",
+          "A2",
+          "A3",
+          "A4",
+          "A5",
+          "A6",
+          "A7",
+          "A8",
+          "A9",
+          "F2",
+          "F3",
+          "F4",
+          "F5",
+          "F6",
+          "F7",
+          "F8",
+          "F9"
         ]
       }
     : {};
@@ -81,12 +81,12 @@ module.exports = {
     pathinfo: true,
 
     // Generated JS files.
-    filename: 'static/js/[name].[chunkhash:8].js'
+    filename: "static/js/[name].[chunkhash:8].js"
   },
 
   resolve: {
-    modules: ['node_modules'],
-    extensions: ['.js', '.elm']
+    modules: ["node_modules"],
+    extensions: [".js", ".elm", ".css"]
   },
 
   module: {
@@ -96,12 +96,12 @@ module.exports = {
       {
         test: /\.js$/,
         exclude: [/elm-stuff/, /node_modules/],
-        loader: require.resolve('babel-loader'),
+        loader: require.resolve("babel-loader"),
         query: {
           // Latest stable ECMAScript features
           presets: [
             [
-              require.resolve('babel-preset-env'),
+              require.resolve("babel-preset-env"),
               {
                 targets: {
                   // React parses on ie 9, so we should too
@@ -119,7 +119,7 @@ module.exports = {
           ],
           plugins: [
             [
-              require.resolve('babel-plugin-transform-runtime'),
+              require.resolve("babel-plugin-transform-runtime"),
               {
                 helpers: false,
                 polyfill: false,
@@ -139,20 +139,20 @@ module.exports = {
           // application, so you could serve static assets outside of the
           // module system.
           {
-            loader: require.resolve('string-replace-loader'),
+            loader: require.resolve("string-replace-loader"),
             query: {
-              search: '%PUBLIC_URL%',
+              search: "%PUBLIC_URL%",
               replace: publicUrl,
-              flags: 'g'
+              flags: "g"
             }
           },
           {
             // Use the local installation of elm-make
-            loader: require.resolve('elm-webpack-loader'),
+            loader: require.resolve("elm-webpack-loader"),
             options: {
               // If ELM_DEBUGGER was set to "true", enable it. Otherwise
               // for invalid values, "false" and as a default, disable it
-              debug: process.env.ELM_DEBUGGER === 'true' ? true : false,
+              debug: process.env.ELM_DEBUGGER === "true" ? true : false,
               pathToMake: paths.elmMake
             }
           }
@@ -164,25 +164,25 @@ module.exports = {
         use: ExtractTextPlugin.extract(
           Object.assign(
             {
-              fallback: require.resolve('style-loader'),
+              fallback: require.resolve("style-loader"),
               use: [
                 {
-                  loader: require.resolve('css-loader'),
+                  loader: require.resolve("css-loader"),
                   options: {
                     minimize: true
                   }
                 },
                 {
-                  loader: require.resolve('postcss-loader'),
+                  loader: require.resolve("postcss-loader"),
                   options: {
-                    ident: 'postcss', // https://webpack.js.org/guides/migrating/#complex-options
+                    ident: "postcss", // https://webpack.js.org/guides/migrating/#complex-options
                     plugins: () => [
                       autoprefixer({
                         browsers: [
-                          '>1%',
-                          'last 4 versions',
-                          'Firefox ESR',
-                          'not ie < 9'
+                          ">1%",
+                          "last 4 versions",
+                          "Firefox ESR",
+                          "not ie < 9"
                         ]
                       })
                     ]
@@ -197,18 +197,18 @@ module.exports = {
 
       {
         exclude: [/\.html$/, /\.js$/, /\.elm$/, /\.css$/, /\.json$/, /\.svg$/],
-        loader: require.resolve('url-loader'),
+        loader: require.resolve("url-loader"),
         options: {
           limit: 10000,
-          name: 'static/media/[name].[hash:8].[ext]'
+          name: "static/media/[name].[hash:8].[ext]"
         }
       },
       // "file" loader for svg
       {
         test: /\.svg$/,
-        loader: require.resolve('file-loader'),
+        loader: require.resolve("file-loader"),
         options: {
-          name: 'static/media/[name].[hash:8].[ext]'
+          name: "static/media/[name].[hash:8].[ext]"
         }
       }
     ]
@@ -264,13 +264,13 @@ module.exports = {
       // If a URL is already hashed by Webpack, then there is no concern
       // about it being stale, and the cache-busting can be skipped.
       dontCacheBustUrlsMatching: /\.\w{8}\./,
-      filename: 'service-worker.js',
+      filename: "service-worker.js",
       logger(message) {
-        if (message.indexOf('Total precache size is') === 0) {
+        if (message.indexOf("Total precache size is") === 0) {
           // This message occurs for every build and is a bit too noisy.
           return;
         }
-        if (message.indexOf('Skipping static resource') === 0) {
+        if (message.indexOf("Skipping static resource") === 0) {
           // This message obscures real errors so we ignore it.
           // https://github.com/facebookincubator/create-react-app/issues/2612
           return;
@@ -279,7 +279,7 @@ module.exports = {
       },
       minify: true,
       // For unknown URLs, fallback to the index page
-      navigateFallback: publicUrl + '/index.html',
+      navigateFallback: publicUrl + "/index.html",
       // Ignores URLs starting from /__ (useful for Firebase):
       // https://github.com/facebookincubator/create-react-app/issues/2237#issuecomment-302693219
       navigateFallbackWhitelist: [/^(?!\/__).*/],
@@ -290,10 +290,10 @@ module.exports = {
   // Some libraries import Node modules but don't use them in the browser.
   // Tell Webpack to provide empty mocks for them so importing them works.
   node: {
-    dgram: 'empty',
-    fs: 'empty',
-    net: 'empty',
-    tls: 'empty',
-    child_process: 'empty'
+    dgram: "empty",
+    fs: "empty",
+    net: "empty",
+    tls: "empty",
+    child_process: "empty"
   }
 };
