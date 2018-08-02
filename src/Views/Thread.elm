@@ -4,8 +4,9 @@ import Components.PostList as PostList
 import Form exposing (Form)
 import Form.Input as Input
 import Html exposing (Html, button, div, h2, label, text)
-import Html.Attributes exposing (class, value)
+import Html.Attributes exposing (class, placeholder, value)
 import Html.Events exposing (onClick)
+import Markdown
 import Types.Msg exposing (Msg(..))
 import Types.PostForm exposing (PostForm)
 import Types.Thread exposing (Thread)
@@ -52,9 +53,13 @@ formView form =
         body =
             Form.getFieldAsString "body" form
     in
-    div []
+    div [ class "comment-form" ]
         [ label [] [ text "Body" ]
-        , Input.textArea body [ value (Maybe.withDefault "" body.value) ]
+        , Input.textArea
+            body
+            [ value (Maybe.withDefault "" body.value)
+            , placeholder "Be excellent to each other.\n**Markdown supported.**"
+            ]
         , errorFor body
         , button
             [ onClick Form.Submit ]

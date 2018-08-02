@@ -5,7 +5,7 @@ import registerServiceWorker from "./registerServiceWorker";
 Main.embed(document.getElementById("root"), {
   storyUid: "hcq",
   token:
-    "SFMyNTY.eyJkYXRhIjp7ImlkIjoxfSwiZXhwIjoxNTMzMDE5NDc1fQ.nainu8W-VymorplRrEdCPiTeTOwYuMI2ck4K1mf7IuM",
+    "SFMyNTY.eyJkYXRhIjp7ImlkIjoxfSwiZXhwIjoxNTMzMjQ1NTgxfQ.0Bk0jnYNYAC7mt-6fk9p6Ko2_4epnxjz7cxsdSEEeHQ",
   graphqlEndpoint: "http://localhost:4000/graphql"
 });
 

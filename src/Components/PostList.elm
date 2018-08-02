@@ -4,6 +4,7 @@ import Date exposing (Date)
 import Date.Format
 import Html exposing (Html, a, abbr, div, img, li, ol, text)
 import Html.Attributes exposing (class, href, src, title)
+import Markdown
 import Types.Post exposing (Post)
 
 
@@ -71,5 +72,5 @@ avatar post =
 
 body : Post -> Html msg
 body post =
-    div [ class "body" ]
-        [ text post.body ]
+    div [ class "body" ] <|
+        Markdown.toHtml Nothing post.body
