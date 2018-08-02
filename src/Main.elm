@@ -11,6 +11,7 @@ import Graphqelm.Http
 import Graphqelm.Operation exposing (RootMutation, RootQuery)
 import Graphqelm.SelectionSet exposing (SelectionSet, hardcoded, with)
 import Html exposing (Html, div, h1, img, text)
+import Html.Attributes exposing (class)
 import Json.Decode as Decode exposing (Value)
 import Json.Decode.Pipeline exposing (decode, required)
 import RemoteData exposing (RemoteData(..))
@@ -32,12 +33,6 @@ import Types.Story exposing (Story)
 import Types.Thread exposing (Thread)
 import Types.User exposing (User)
 import Views.Thread
-
-
-graphqlEndpoint : String
-graphqlEndpoint =
-    "http://localhost:4000/graphql"
-
 
 
 --import Views.Thread
@@ -87,12 +82,13 @@ user : SelectionSet User SmoothTerminal.Object.FirestormUser
 user =
     FirestormUser.selection User
         |> with FirestormUser.username
-        |> hardcoded "https://secure.gravatar.com/avatar/6bed913a657e07e88a2f6a30de677efa?d=https%3A%2F%2Fapi.adorable.io%2Favatars%2F256%2Fveetase%40adorable.png&s=256"
+        |> with FirestormUser.avatarUrl
 
 
 type alias Flags =
     { storyUid : String
     , token : String
+    , graphqlEndpoint : String
     }
 
 
@@ -124,12 +120,7 @@ init flagsValue =
             }
 
         newCmd =
-            case flags of
-                Nothing ->
-                    Cmd.none
-
-                Just { storyUid, token } ->
-                    getStory storyUid token
+            getStoryFromModel newModel
     in
     ( newModel, newCmd )
 
@@ -146,6 +137,7 @@ flagsDecoder =
     decode Flags
         |> required "storyUid" Decode.string
         |> required "token" Decode.string
+        |> required "graphqlEndpoint" Decode.string
 
 
 getStoryFromModel : Model -> Cmd Msg
@@ -155,7 +147,7 @@ getStoryFromModel model =
             Cmd.none
 
         Just flags ->
-            getStory flags.storyUid flags.token
+            getStory flags.storyUid flags.token flags.graphqlEndpoint
 
 
 
@@ -203,28 +195,30 @@ update msg model =
 
 view : Model -> Html Msg
 view { story, form, error } =
-    case story of
-        NotAsked ->
-            text "Initializing..."
+    div [ class "firestorm-story-comments" ]
+        [ case story of
+            NotAsked ->
+                text "Initializing..."
 
-        Loading ->
-            text "Loading."
+            Loading ->
+                text "Loading."
 
-        Failure err ->
-            text ("Error: " ++ toString err)
+            Failure err ->
+                text ("Error: " ++ toString err)
 
-        Success response ->
-            case response.story of
-                Just story ->
-                    case story.commentsThread of
-                        Just thread ->
-                            Views.Thread.view form error thread
+            Success response ->
+                case response.story of
+                    Just story ->
+                        case story.commentsThread of
+                            Just thread ->
+                                Views.Thread.view form error thread
 
-                        Nothing ->
-                            text "no comments thread"
+                            Nothing ->
+                                text "no comments thread"
 
-                Nothing ->
-                    text "no story"
+                    Nothing ->
+                        text "no story"
+        ]
 
 
 
@@ -241,8 +235,8 @@ main =
         }
 
 
-getStory : String -> String -> Cmd Msg
-getStory storyUid token =
+getStory : String -> String -> String -> Cmd Msg
+getStory storyUid token graphqlEndpoint =
     storyUid
         |> query
         |> Graphqelm.Http.queryRequest graphqlEndpoint
@@ -277,7 +271,7 @@ addComment { story, form, flags } =
 
                                 Just story ->
                                     addCommentMutation story.id commentForm.body
-                                        |> Graphqelm.Http.mutationRequest graphqlEndpoint
+                                        |> Graphqelm.Http.mutationRequest flags.graphqlEndpoint
                                         |> withAuthorization flags.token
                                         |> Graphqelm.Http.send
                                             (RemoteData.fromResult

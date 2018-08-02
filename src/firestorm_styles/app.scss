@@ -14,12 +14,12 @@
 @import "tools.mixins";
 
 // == GENERIC ==
-@import "generic.normalize";
-@import "generic.purecss";
-@import "generic.typeplate";
+// @import "generic.normalize";
+// @import "generic.purecss";
+// @import "generic.typeplate";
 
 // pure-drawer - a pure css off-canvas sliding drawer
-@import "modules/pure-drawer.scss";
+// @import "modules/pure-drawer.scss";
 
 @import "typography";
 
@@ -39,12 +39,6 @@
 @import "components/help-block";
 @import "components/hero-logo";
 @import "components/item-metadata";
-@import "components/navigation-drawer";
-@import "components/navigation-logo";
-@import "components/navigation-menu";
-@import "components/new-category";
-@import "components/new-thread";
-@import "components/page-header";
 @import "components/pagination";
 @import "components/post-editor";
 @import "components/post-item-actions";

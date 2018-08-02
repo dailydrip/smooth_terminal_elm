@@ -25,6 +25,11 @@ selection constructor =
     Object.selection constructor
 
 
+avatarUrl : Field String SmoothTerminal.Object.FirestormUser
+avatarUrl =
+    Object.fieldDecoder "avatarUrl" [] Decode.string
+
+
 id : Field SmoothTerminal.Scalar.Id SmoothTerminal.Object.FirestormUser
 id =
     Object.fieldDecoder "id" [] (Decode.oneOf [ Decode.string, Decode.float |> Decode.map toString, Decode.int |> Decode.map toString, Decode.bool |> Decode.map toString ] |> Decode.map SmoothTerminal.Scalar.Id)

@@ -1,12 +1,11 @@
 // ADAM HELP
-body {
-  font-family: 'Fira Sans', sans;
-}
+.firestorm-story-comments {
+  font-family: "Fira Sans", sans;
+  a {
+    color: $punch;
+  }
 
-a {
-  color: $punch;
-}
-
-p + p {
-  text-indent: 0;
+  p + p {
+    text-indent: 0;
+  }
 }
