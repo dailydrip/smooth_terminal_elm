@@ -83,6 +83,15 @@ authors object =
     Object.selectionField "authors" [] object (identity >> Decode.nullable >> Decode.list >> Decode.nullable)
 
 
+type alias FirestormThreadRequiredArguments =
+    { id : String }
+
+
+firestormThread : FirestormThreadRequiredArguments -> SelectionSet decodesTo SmoothTerminal.Object.FirestormThread -> Field (Maybe decodesTo) RootQuery
+firestormThread requiredArgs object =
+    Object.selectionField "firestormThread" [ Argument.required "id" requiredArgs.id Encode.string ] object (identity >> Decode.nullable)
+
+
 type alias StoriesOptionalArguments =
     { page : OptionalArgument Int, perPage : OptionalArgument Int, tag : OptionalArgument String }
 

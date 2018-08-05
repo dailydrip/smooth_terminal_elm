@@ -1,11 +1,11 @@
 module Types.Msg exposing (Msg(..))
 
 import Form
-import Types.RemoteStory exposing (RemoteStory)
+import Types.RemoteThread exposing (RemoteThread)
 
 
 type Msg
-    = GotResponse RemoteStory
+    = GotResponse RemoteThread
     | AddComment
     | AddedComment (Maybe String)
     | FormMsg Form.Msg

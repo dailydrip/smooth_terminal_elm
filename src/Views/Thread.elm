@@ -6,7 +6,6 @@ import Form.Input as Input
 import Html exposing (Html, button, div, h2, label, text)
 import Html.Attributes exposing (class, placeholder, value)
 import Html.Events exposing (onClick)
-import Markdown
 import Types.Msg exposing (Msg(..))
 import Types.PostForm exposing (PostForm)
 import Types.Thread exposing (Thread)

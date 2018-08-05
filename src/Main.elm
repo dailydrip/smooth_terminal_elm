@@ -1,7 +1,5 @@
 module Main exposing (..)
 
---import Types.Thread as Thread exposing (Thread)
-
 import Date exposing (Date)
 import Form exposing (Form)
 import Form.Field
@@ -20,16 +18,15 @@ import SmoothTerminal.Object
 import SmoothTerminal.Object.FirestormPost as FirestormPost
 import SmoothTerminal.Object.FirestormThread as FirestormThread
 import SmoothTerminal.Object.FirestormUser as FirestormUser
-import SmoothTerminal.Object.Story as Story
 import SmoothTerminal.Query as Query
 import SmoothTerminal.Scalar
-import Types.GetStoryResponse exposing (GetStoryResponse)
+import Types.AddPostResponse exposing (AddPostResponse)
+import Types.GetThreadResponse exposing (GetThreadResponse)
 import Types.GraphqlData exposing (GraphqlData)
 import Types.Msg exposing (Msg(..))
 import Types.Post exposing (Post)
 import Types.PostForm exposing (PostForm)
-import Types.RemoteStory exposing (RemoteStory)
-import Types.Story exposing (Story)
+import Types.RemoteThread exposing (RemoteThread)
 import Types.Thread exposing (Thread)
 import Types.User exposing (User)
 import Views.Thread
@@ -39,29 +36,22 @@ import Views.Thread
 ---- MODEL ----
 
 
-query : String -> SelectionSet GetStoryResponse RootQuery
-query storyUid =
-    Query.selection GetStoryResponse
-        |> with (Query.story { uid = storyUid } story)
+query : String -> SelectionSet GetThreadResponse RootQuery
+query threadId =
+    Query.selection GetThreadResponse
+        |> with (Query.firestormThread { id = threadId } thread)
 
 
-story : SelectionSet Story SmoothTerminal.Object.Story
-story =
-    Story.selection Story
-        |> with Story.id
-        |> with (Story.commentsThread commentsThread)
-        |> with Story.uid
-
-
-commentsThread : SelectionSet Thread SmoothTerminal.Object.FirestormThread
-commentsThread =
+thread : SelectionSet Thread SmoothTerminal.Object.FirestormThread
+thread =
     FirestormThread.selection Thread
+        |> with FirestormThread.id
         |> with FirestormThread.title
-        |> with (FirestormThread.posts posts)
+        |> with (FirestormThread.posts post)
 
 
-posts : SelectionSet Post SmoothTerminal.Object.FirestormPost
-posts =
+post : SelectionSet Post SmoothTerminal.Object.FirestormPost
+post =
     FirestormPost.selection Post
         |> with FirestormPost.body
         |> with (FirestormPost.user user)
@@ -86,14 +76,14 @@ user =
 
 
 type alias Flags =
-    { storyUid : String
+    { threadId : String
     , token : String
     , graphqlEndpoint : String
     }
 
 
 type alias Model =
-    { story : RemoteStory
+    { thread : RemoteThread
     , form : Form () PostForm
     , flags : Maybe Flags
     , error : Maybe String
@@ -113,14 +103,14 @@ init flagsValue =
             decodeFlags flagsValue
 
         newModel =
-            { story = RemoteData.Loading
+            { thread = RemoteData.Loading
             , form = Form.initial [] validation
             , flags = flags
             , error = Nothing
             }
 
         newCmd =
-            getStoryFromModel newModel
+            getThreadFromModel newModel
     in
     ( newModel, newCmd )
 
@@ -135,19 +125,23 @@ decodeFlags json =
 flagsDecoder : Decode.Decoder Flags
 flagsDecoder =
     decode Flags
-        |> required "storyUid" Decode.string
+        |> required "threadId" Decode.string
         |> required "token" Decode.string
         |> required "graphqlEndpoint" Decode.string
 
 
-getStoryFromModel : Model -> Cmd Msg
-getStoryFromModel model =
-    case model.flags of
+getThreadFromModel : Model -> Cmd Msg
+getThreadFromModel { flags } =
+    let
+        _ =
+            Debug.log "flags" flags
+    in
+    case flags of
         Nothing ->
             Cmd.none
 
         Just flags ->
-            getStory flags.storyUid flags.token flags.graphqlEndpoint
+            getThread flags.threadId flags.token flags.graphqlEndpoint
 
 
 
@@ -157,8 +151,8 @@ getStoryFromModel model =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        GotResponse story ->
-            ( { model | story = story }, Cmd.none )
+        GotResponse thread ->
+            ( { model | thread = thread }, Cmd.none )
 
         AddComment ->
             ( model, addComment model )
@@ -173,7 +167,7 @@ update msg model =
                         )
                         model.form
               }
-            , getStoryFromModel model
+            , getThreadFromModel model
             )
 
         FormMsg formMsg ->
@@ -194,9 +188,9 @@ update msg model =
 
 
 view : Model -> Html Msg
-view { story, form, error } =
-    div [ class "firestorm-story-comments" ]
-        [ case story of
+view { thread, form, error } =
+    div [ class "firestorm-thread-comments" ]
+        [ case thread of
             NotAsked ->
                 text "Initializing..."
 
@@ -207,17 +201,12 @@ view { story, form, error } =
                 text ("Error: " ++ toString err)
 
             Success response ->
-                case response.story of
-                    Just story ->
-                        case story.commentsThread of
-                            Just thread ->
-                                Views.Thread.view form error thread
-
-                            Nothing ->
-                                text "no comments thread"
+                case response.thread of
+                    Just thread ->
+                        Views.Thread.view form error thread
 
                     Nothing ->
-                        text "no story"
+                        text "no thread"
         ]
 
 
@@ -235,24 +224,24 @@ main =
         }
 
 
-getStory : String -> String -> String -> Cmd Msg
-getStory storyUid token graphqlEndpoint =
-    storyUid
+getThread : String -> String -> String -> Cmd Msg
+getThread threadId token graphqlEndpoint =
+    threadId
         |> query
         |> Graphqelm.Http.queryRequest graphqlEndpoint
         |> withAuthorization token
         |> Graphqelm.Http.send (RemoteData.fromResult >> GotResponse)
 
 
-addCommentMutation : Int -> String -> SelectionSet GetStoryResponse RootMutation
-addCommentMutation storyId body =
-    Mutation.selection GetStoryResponse
+addCommentMutation : SmoothTerminal.Scalar.Id -> String -> SelectionSet AddPostResponse RootMutation
+addCommentMutation (SmoothTerminal.Scalar.Id threadId) body =
+    Mutation.selection AddPostResponse
         |> with
-            (Mutation.addComment { body = body, storyId = toString storyId } story)
+            (Mutation.addComment { body = body, firestormThreadId = threadId } post)
 
 
 addComment : Model -> Cmd Msg
-addComment { story, form, flags } =
+addComment { thread, form, flags } =
     case flags of
         Nothing ->
             Cmd.none
@@ -263,14 +252,14 @@ addComment { story, form, flags } =
                     Cmd.none
 
                 Just commentForm ->
-                    case story of
+                    case thread of
                         Success response ->
-                            case response.story of
+                            case response.thread of
                                 Nothing ->
                                     Cmd.none
 
-                                Just story ->
-                                    addCommentMutation story.id commentForm.body
+                                Just thread ->
+                                    addCommentMutation thread.id commentForm.body
                                         |> Graphqelm.Http.mutationRequest flags.graphqlEndpoint
                                         |> withAuthorization flags.token
                                         |> Graphqelm.Http.send

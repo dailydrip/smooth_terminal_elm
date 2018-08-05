@@ -1,17 +1,20 @@
 module Types.Thread exposing (Thread, new)
 
+import SmoothTerminal.Scalar exposing (Id(..))
 import Types.Post as Post exposing (Post)
 
 
 type alias Thread =
-    { title : String
+    { id : Id
+    , title : String
     , posts : List Post
     }
 
 
 new : Thread
 new =
-    { title = "Some thread"
+    { id = Id "adsfasdf"
+    , title = "Some thread"
     , posts =
         [ Post.new
         , Post.new

@@ -28,9 +28,9 @@ selection constructor =
 
 
 type alias AddCommentRequiredArguments =
-    { body : String, storyId : String }
+    { body : String, firestormThreadId : String }
 
 
-addComment : AddCommentRequiredArguments -> SelectionSet decodesTo SmoothTerminal.Object.Story -> Field (Maybe decodesTo) RootMutation
+addComment : AddCommentRequiredArguments -> SelectionSet decodesTo SmoothTerminal.Object.FirestormPost -> Field (Maybe decodesTo) RootMutation
 addComment requiredArgs object =
-    Object.selectionField "addComment" [ Argument.required "body" requiredArgs.body Encode.string, Argument.required "storyId" requiredArgs.storyId Encode.string ] object (identity >> Decode.nullable)
+    Object.selectionField "addComment" [ Argument.required "body" requiredArgs.body Encode.string, Argument.required "firestormThreadId" requiredArgs.firestormThreadId Encode.string ] object (identity >> Decode.nullable)

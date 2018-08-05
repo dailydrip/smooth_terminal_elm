@@ -40,6 +40,11 @@ insertedAt =
     Object.fieldDecoder "insertedAt" [] (Decode.oneOf [ Decode.string, Decode.float |> Decode.map toString, Decode.int |> Decode.map toString, Decode.bool |> Decode.map toString ] |> Decode.map SmoothTerminal.Scalar.DateTime)
 
 
+thread : SelectionSet decodesTo SmoothTerminal.Object.FirestormThread -> Field decodesTo SmoothTerminal.Object.FirestormPost
+thread object =
+    Object.selectionField "thread" [] object identity
+
+
 user : SelectionSet decodesTo SmoothTerminal.Object.FirestormUser -> Field decodesTo SmoothTerminal.Object.FirestormPost
 user object =
     Object.selectionField "user" [] object identity
