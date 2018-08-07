@@ -32,7 +32,6 @@ import Types.User exposing (User)
 import Views.Thread
 
 
---import Views.Thread
 ---- MODEL ----
 
 
@@ -103,7 +102,7 @@ init flagsValue =
             decodeFlags flagsValue
 
         newModel =
-            { thread = RemoteData.Loading
+            { thread = RemoteData.NotAsked
             , form = Form.initial [] validation
             , flags = flags
             , error = Nothing
@@ -132,10 +131,6 @@ flagsDecoder =
 
 getThreadFromModel : Model -> Cmd Msg
 getThreadFromModel { flags } =
-    let
-        _ =
-            Debug.log "flags" flags
-    in
     case flags of
         Nothing ->
             Cmd.none
@@ -159,13 +154,7 @@ update msg model =
 
         AddedComment maybeString ->
             ( { model
-                | form =
-                    Form.update validation
-                        (Form.Reset
-                            [ ( "body", Form.Field.string "" )
-                            ]
-                        )
-                        model.form
+                | form = Form.initial [] validation
               }
             , getThreadFromModel model
             )
