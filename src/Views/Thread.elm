@@ -4,7 +4,7 @@ import Components.PostList as PostList
 import Form exposing (Form)
 import Form.Input as Input
 import Html exposing (Html, button, div, h2, label, text)
-import Html.Attributes exposing (class, placeholder, value)
+import Html.Attributes exposing (attribute, class, placeholder, value)
 import Html.Events exposing (onClick)
 import Types.Msg exposing (Msg(..))
 import Types.PostForm exposing (PostForm)
@@ -58,6 +58,7 @@ formView form =
             body
             [ value (Maybe.withDefault "" body.value)
             , placeholder "Be excellent to each other.\n**Markdown supported.**"
+            , attribute "data-enable-grammarly" "false"
             ]
         , errorFor body
         , button
