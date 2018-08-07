@@ -1,3 +1,11 @@
+# SmoothTerminal Elm
+
+An Elm client for [SmoothTerminal](https://www.smoothterminal.com). Right now it just provides the
+comments section, which is talking to a GraphQL endpoint that uses the [Firestorm
+Forum](https://www.firestormforum.org) as a backend to manage comments, one thread per story.
+
+---
+
 This project is bootstrapped with [Create Elm App](https://github.com/halfzebra/create-elm-app).
 
 Below you will find some information on how to perform basic tasks.
